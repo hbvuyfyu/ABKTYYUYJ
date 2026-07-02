@@ -1,0 +1,90 @@
+name: Build VIP APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Create asset directories
+        run: |
+          mkdir -p mobile/assets/images
+          mkdir -p mobile/assets/icons
+          touch mobile/assets/images/.gitkeep
+          touch mobile/assets/icons/.gitkeep
+
+      - name: Get Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Analyze Flutter project
+        working-directory: mobile
+        run: flutter analyze --no-fatal-infos || true
+
+      - name: Build release APK
+        working-directory: mobile
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Rename APK
+        run: |
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk \
+             mobile/build/app/outputs/flutter-apk/VIP_v1.0.0.apk
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VIP_APK
+          path: mobile/build/app/outputs/flutter-apk/VIP_v1.0.0.apk
+          retention-days: 30
+
+      - name: Delete old release if exists
+        run: |
+          gh release delete v1.0.0 --yes || true
+          git push --delete origin v1.0.0 || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "VIP v1.0.0"
+          body: |
+            ## VIP v1.0.0
+
+            ### تحميل التطبيق
+            حمّل ملف **VIP_v1.0.0.apk** من قسم Assets أدناه
+
+            ### متطلبات التشغيل
+            - Android 5.0 (API 21) أو أعلى
+            - السماح بتثبيت تطبيقات من مصادر غير معروفة
+          files: mobile/build/app/outputs/flutter-apk/VIP_v1.0.0.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
