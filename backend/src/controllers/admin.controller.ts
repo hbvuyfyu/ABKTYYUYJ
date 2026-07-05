@@ -87,7 +87,12 @@ export const getPendingPayments = async (_req: AuthRequest, res: Response): Prom
         orderBy: { createdAt: 'desc' },
       })
     );
-    res.json({ success: true, data: payments });
+    // Strip heavy base64 field from list responses
+    const cleaned = payments.map((p) => {
+      const { proofImageBase64, ...rest } = p as any;
+      return rest;
+    });
+    res.json({ success: true, data: cleaned });
   } catch (err) {
     console.error('[getPendingPayments]', errMsg(err));
     res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
@@ -102,7 +107,12 @@ export const getAllPayments = async (_req: AuthRequest, res: Response): Promise<
         orderBy: { createdAt: 'desc' },
       })
     );
-    res.json({ success: true, data: payments });
+    // Strip heavy base64 field from list responses
+    const cleaned = payments.map((p) => {
+      const { proofImageBase64, ...rest } = p as any;
+      return rest;
+    });
+    res.json({ success: true, data: cleaned });
   } catch (err) {
     console.error('[getAllPayments]', errMsg(err));
     res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
@@ -285,6 +295,34 @@ export const getAdminLogs = async (_req: AuthRequest, res: Response): Promise<vo
     res.json({ success: true, data: logs });
   } catch (err) {
     console.error('[getAdminLogs]', errMsg(err));
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
+  }
+};
+
+// ── Get payment proof image (URL or base64) ───────────────────────────────────
+export const getPaymentProof = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { paymentId } = req.params;
+    const payment = await withDb(() =>
+      prisma.payment.findUnique({
+        where: { id: paymentId },
+        select: { proofImageUrl: true, proofImageBase64: true },
+      })
+    );
+    if (!payment) {
+      res.status(404).json({ success: false, message: 'الدفع غير موجود' });
+      return;
+    }
+    res.json({
+      success: true,
+      data: {
+        proofImageUrl: payment.proofImageUrl,
+        hasBase64: !!payment.proofImageBase64,
+        proofImageBase64: payment.proofImageBase64,
+      },
+    });
+  } catch (err) {
+    console.error('[getPaymentProof]', errMsg(err));
     res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
   }
 };

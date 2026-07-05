@@ -41,7 +41,12 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response): Promis
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
-    res.json({ success: true, data: payments });
+    // Strip heavy base64 field from list responses
+    const cleaned = payments.map((p) => {
+      const { proofImageBase64, ...rest } = p as any;
+      return rest;
+    });
+    res.json({ success: true, data: cleaned });
   } catch {
     res.status(500).json({ success: false, message: 'Server error' });
   }

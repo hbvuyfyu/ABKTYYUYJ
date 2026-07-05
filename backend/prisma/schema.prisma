@@ -46,6 +46,8 @@ model User {
   adminLogs     AdminLog[]     @relation("AdminLogs")
   targetLogs    AdminLog[]     @relation("TargetLogs")
   schedGroups   SchedGroup[]
+  proxies       Proxy[]
+  proxySelection UserProxySelection?
 
   @@map("users")
 }
@@ -94,6 +96,7 @@ model Payment {
   status           PaymentStatus @default(PENDING)
   amount           Float
   proofImageUrl    String?
+  proofImageBase64 String?
   txid             String?       @unique
   txidVerified     Boolean       @default(false)
   notes            String?
@@ -219,4 +222,41 @@ model SchedGroup {
   @@index([userId])
   @@index([status])
   @@map("sched_groups")
+}
+
+// ── Proxies (بروكسي) ──────────────────────────────────────────────────────────
+
+model Proxy {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  type      String   // 'socks5' | 'http'
+  host      String
+  port      Int
+  username  String?
+  password  String?
+  isActive  Boolean  @default(true)
+  isWorking Boolean  @default(false)
+  lastCheck DateTime?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selection UserProxySelection?
+
+  @@index([userId])
+  @@map("proxies")
+}
+
+model UserProxySelection {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  proxyId   String?  @unique
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proxy     Proxy?   @relation(fields: [proxyId], references: [id], onDelete: SetNull)
+
+  @@map("user_proxy_selections")
 }

@@ -6,6 +6,9 @@
 -- ============================================================
 
 -- Drop existing tables if they exist (clean slate)
+DROP TABLE IF EXISTS "user_proxy_selections" CASCADE;
+DROP TABLE IF EXISTS "proxies" CASCADE;
+DROP TABLE IF EXISTS "sched_groups" CASCADE;
 DROP TABLE IF EXISTS "game_events" CASCADE;
 DROP TABLE IF EXISTS "games" CASCADE;
 DROP TABLE IF EXISTS "used_txids" CASCADE;
@@ -79,6 +82,7 @@ CREATE TABLE "payments" (
     "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "amount" DOUBLE PRECISION NOT NULL,
     "proofImageUrl" TEXT,
+    "proofImageBase64" TEXT,
     "txid" TEXT,
     "txidVerified" BOOLEAN NOT NULL DEFAULT false,
     "notes" TEXT,
@@ -162,6 +166,54 @@ CREATE TABLE "game_events" (
     CONSTRAINT "game_events_pkey" PRIMARY KEY ("id")
 );
 
+-- Create sched_groups table (scheduling groups)
+CREATE TABLE "sched_groups" (
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+    "userId" TEXT NOT NULL,
+    "platform" TEXT NOT NULL,
+    "gameId" TEXT,
+    "gameName" TEXT NOT NULL,
+    "gamePkg" TEXT,
+    "gameKey" TEXT,
+    "eventsOrder" TEXT NOT NULL,
+    "intervalMinutes" INTEGER NOT NULL DEFAULT 0,
+    "gaid" TEXT NOT NULL,
+    "afUid" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "nextRun" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sched_groups_pkey" PRIMARY KEY ("id")
+);
+
+-- Create proxies table
+CREATE TABLE "proxies" (
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "host" TEXT NOT NULL,
+    "port" INTEGER NOT NULL,
+    "username" TEXT,
+    "password" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isWorking" BOOLEAN NOT NULL DEFAULT false,
+    "lastCheck" TIMESTAMP(3),
+    "lastError" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "proxies_pkey" PRIMARY KEY ("id")
+);
+
+-- Create user_proxy_selections table
+CREATE TABLE "user_proxy_selections" (
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+    "userId" TEXT NOT NULL,
+    "proxyId" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "user_proxy_selections_pkey" PRIMARY KEY ("id")
+);
+
 -- Create indexes
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "payments_txid_key" ON "payments"("txid");
@@ -171,6 +223,11 @@ CREATE UNIQUE INDEX "used_txids_txid_key" ON "used_txids"("txid");
 CREATE INDEX "games_platform_idx" ON "games"("platform");
 CREATE INDEX "games_package_idx" ON "games"("package");
 CREATE INDEX "game_events_gameId_idx" ON "game_events"("gameId");
+CREATE INDEX "sched_groups_userId_idx" ON "sched_groups"("userId");
+CREATE INDEX "sched_groups_status_idx" ON "sched_groups"("status");
+CREATE INDEX "proxies_userId_idx" ON "proxies"("userId");
+CREATE UNIQUE INDEX "user_proxy_selections_userId_key" ON "user_proxy_selections"("userId");
+CREATE UNIQUE INDEX "user_proxy_selections_proxyId_key" ON "user_proxy_selections"("proxyId");
 
 -- Add foreign key constraints
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -187,6 +244,12 @@ ALTER TABLE "admin_logs" ADD CONSTRAINT "admin_logs_adminId_fkey" FOREIGN KEY ("
 ALTER TABLE "admin_logs" ADD CONSTRAINT "admin_logs_targetId_fkey" FOREIGN KEY ("targetId") REFERENCES "users"("id") ON UPDATE CASCADE;
 
 ALTER TABLE "game_events" ADD CONSTRAINT "game_events_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "games"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "sched_groups" ADD CONSTRAINT "sched_groups_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "proxies" ADD CONSTRAINT "proxies_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "user_proxy_selections" ADD CONSTRAINT "user_proxy_selections_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "user_proxy_selections" ADD CONSTRAINT "user_proxy_selections_proxyId_fkey" FOREIGN KEY ("proxyId") REFERENCES "proxies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- ============================================================
 -- Seed Data: Default Plans

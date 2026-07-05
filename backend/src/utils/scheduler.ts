@@ -1,5 +1,6 @@
 import prisma from './prisma';
 import { sendAF, sendADJ, sendSingular } from '../controllers/games.controller';
+import { getAxiosAgentForUser, verifyProxyWorking } from '../controllers/proxy.controller';
 
 type SchedEntry =
   | { level: number; interval: number; wait_delta?: number }
@@ -60,14 +61,15 @@ async function sendOneEvent(
   gaid: string,
   afUid: string,
   entry: SchedEntry,
-  isCustom: boolean
+  isCustom: boolean,
+  agent?: any
 ): Promise<{ status: number; body: string }> {
   try {
     if (isCustom) {
       if ('token' in entry) {
         const tok = entry.token;
         if (platform === 'adj' && gameKey) {
-          return await sendADJ(gameKey, tok, gaid);
+          return await sendADJ(gameKey, tok, gaid, agent);
         }
         return { status: 0, body: 'token mode requires adj platform' };
       }
@@ -80,7 +82,7 @@ async function sendOneEvent(
           select: { eventToken: true },
         });
         if (ev?.eventToken) {
-          return await sendADJ(gameKey, ev.eventToken, gaid);
+          return await sendADJ(gameKey, ev.eventToken, gaid, agent);
         }
         return { status: 0, body: 'no event token found' };
       }
@@ -91,7 +93,7 @@ async function sendOneEvent(
         });
         const baseName = ev?.eventName ?? 'level_1';
         const customName = baseName.replace(/\d+/, String(levelNum)) || `level_${levelNum}`;
-        return await sendSingular(customName, gaid, afUid, gamePkg, gameKey);
+        return await sendSingular(customName, gaid, afUid, gamePkg, gameKey, undefined, agent);
       }
       // af
       if (platform === 'af' && gamePkg && gameKey) {
@@ -103,7 +105,7 @@ async function sendOneEvent(
         const customName = /\d/.test(baseName)
           ? baseName.replace(/\d+/, String(levelNum))
           : `${baseName}_${levelNum}`;
-        return await sendAF(gamePkg, gameKey, gaid, afUid, customName);
+        return await sendAF(gamePkg, gameKey, gaid, afUid, customName, undefined, agent);
       }
       return { status: 0, body: 'missing game config' };
     }
@@ -111,17 +113,17 @@ async function sendOneEvent(
     // legacy mode: entry = [id, name]
     const [, eventName] = entry as [string, string];
     if (platform === 'af' && gamePkg && gameKey) {
-      return await sendAF(gamePkg, gameKey, gaid, afUid, eventName);
+      return await sendAF(gamePkg, gameKey, gaid, afUid, eventName, undefined, agent);
     }
     if (platform === 'singular' && gamePkg && gameKey) {
-      return await sendSingular(eventName, gaid, afUid, gamePkg, gameKey);
+      return await sendSingular(eventName, gaid, afUid, gamePkg, gameKey, undefined, agent);
     }
     if (platform === 'adj' && gameKey) {
       const ev = await prisma.gameEvent.findFirst({
         where: { eventName },
         select: { eventToken: true },
       });
-      if (ev?.eventToken) return await sendADJ(gameKey, ev.eventToken, gaid);
+      if (ev?.eventToken) return await sendADJ(gameKey, ev.eventToken, gaid, agent);
     }
     return { status: 0, body: 'unsupported platform' };
   } catch (err: any) {
@@ -166,6 +168,28 @@ export async function runSchedGroupLoop(groupId: string): Promise<void> {
 
   const intervalSec = g.intervalMinutes * 60;
 
+  // Resolve the user's selected proxy once at the start of the loop
+  let agent: any = null;
+  let proxyChecked = false;
+  try {
+    agent = await getAxiosAgentForUser(g.userId);
+    if (agent) {
+      const proxyCheck = await verifyProxyWorking(g.userId);
+      proxyChecked = true;
+      if (!proxyCheck.working) {
+        console.log(`[sched:${groupId}] proxy not working — aborting: ${proxyCheck.error}`);
+        await prisma.schedGroup.update({
+          where: { id: groupId },
+          data: { status: 'stopped' },
+        }).catch(() => {});
+        cancelTask(groupId);
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn(`[sched:${groupId}] proxy resolve error:`, err);
+  }
+
   for (let i = 0; i < events.length; i++) {
     if (!(await isGroupActive(groupId))) {
       cancelTask(groupId);
@@ -204,7 +228,8 @@ export async function runSchedGroupLoop(groupId: string): Promise<void> {
       g.gaid,
       g.afUid ?? '',
       entry,
-      isCustom
+      isCustom,
+      agent ?? undefined
     );
 
     await prisma.schedGroup.update({

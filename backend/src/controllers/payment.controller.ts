@@ -100,18 +100,51 @@ export const uploadProof = async (req: AuthRequest, res: Response): Promise<void
       res.status(400).json({ success: false, message: 'الصورة مطلوبة' });
       return;
     }
-    await configureCloudinary();
-    const result = await cloudinary.uploader.upload(req.body.imageBase64, {
-      folder: 'game-event/payment-proofs',
-      resource_type: 'image',
-    });
+
+    const imageBase64: string = req.body.imageBase64;
+
+    // Try Cloudinary first; fall back to storing base64 in DB if not configured or upload fails
+    let proofImageUrl: string | null = null;
+    let proofImageBase64: string | null = null;
+    let cloudinaryOk = false;
+
+    try {
+      await configureCloudinary();
+      const config = cloudinary.config();
+      if (config.cloud_name && config.api_key && config.api_secret) {
+        const result = await cloudinary.uploader.upload(imageBase64, {
+          folder: 'game-event/payment-proofs',
+          resource_type: 'image',
+        });
+        proofImageUrl = result.secure_url;
+        cloudinaryOk = true;
+      }
+    } catch (cloudErr) {
+      console.error('[uploadProof] Cloudinary upload failed, falling back to base64:', errMsg(cloudErr));
+    }
+
+    if (!cloudinaryOk) {
+      // Store base64 directly in DB as fallback so admin can still see the proof
+      proofImageBase64 = imageBase64;
+    }
+
     const updated = await withDb(() =>
       prisma.payment.update({
         where: { id: paymentId },
-        data: { proofImageUrl: result.secure_url },
+        data: {
+          proofImageUrl,
+          proofImageBase64,
+        },
       })
     );
-    res.json({ success: true, data: updated });
+
+    res.json({
+      success: true,
+      data: {
+        ...updated,
+        proofImageBase64: undefined, // don't send the heavy base64 back to client
+      },
+    });
   } catch (err) {
     console.error('[uploadProof]', errMsg(err));
     res.status(500).json({ success: false, message: 'خطأ في السيرفر' });

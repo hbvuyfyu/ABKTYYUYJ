@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import 'jumper_engine_screen.dart';
 import 'schedule_engine_screen.dart';
+import 'proxy_manager_screen.dart';
 
 class EngineGuardScreen extends StatefulWidget {
   const EngineGuardScreen({super.key});
@@ -301,6 +302,31 @@ class _EngineGuardScreenState extends State<EngineGuardScreen>
 
             const SizedBox(height: 16),
 
+            // بروكسي Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProxyManagerScreen())),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppTheme.surface,
+                  foregroundColor: AppTheme.textPrimary,
+                  side: BorderSide(color: AppTheme.primary.withOpacity(0.35), width: 1),
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+                  Text('🌐', style: TextStyle(fontSize: 26, color: AppTheme.textPrimary)),
+                  SizedBox(width: 14),
+                  Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('بروكسي', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppTheme.textPrimary)),
+                    Text('Proxy Manager', style: TextStyle(fontSize: 11, fontFamily: 'Courier', color: AppTheme.textSecondary, letterSpacing: 1.5)),
+                  ]),
+                ]),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             // Info card
             Container(
               padding: const EdgeInsets.all(14),
@@ -313,7 +339,7 @@ class _EngineGuardScreenState extends State<EngineGuardScreen>
                 const Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 18),
                 const SizedBox(width: 10),
                 Expanded(child: Text(
-                  'يعرض جميع التطبيقات المفتوحة ويُشغّل محرك الأحداث على ما تختاره',
+                  'يعرض جميع التطبيقات المفتوحة ويُشغّل محرك الأحداث على ما تختاره. يمكنك إدارة البروكسيات وإرسال الأحداث عبرها.',
                   style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.8), fontFamily: 'Cairo', fontSize: 12, height: 1.5),
                 )),
               ]),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/api_service.dart';
@@ -80,6 +81,52 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> with SingleTi
     ));
   }
 
+  Future<void> _viewProof(String paymentId) async {
+    try {
+      final res = await ApiService.get('/admin/payments/$paymentId/proof');
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final data = res['data'] as Map<String, dynamic>;
+        final url = data['proofImageUrl'] as String?;
+        final base64 = data['proofImageBase64'] as String?;
+        if (url == null && base64 == null) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('لا يوجد إثبات دفع مرفوع', style: TextStyle(fontFamily: 'Cairo')),
+            backgroundColor: AppTheme.warning,
+          ));
+          return;
+        }
+        showDialog(context: context, builder: (_) => Dialog(
+          backgroundColor: AppTheme.cardBg,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+              const Icon(Icons.receipt_long, color: AppTheme.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text('إثبات الدفع', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, color: AppTheme.textPrimary, fontSize: 16)),
+              const Spacer(),
+              IconButton(icon: const Icon(Icons.close, color: AppTheme.textSecondary), onPressed: () => Navigator.pop(context)),
+            ])),
+            if (url != null)
+              Image.network(url, fit: BoxFit.contain, height: 400, width: double.infinity)
+            else if (base64 != null)
+              Image.memory(base64Decode(base64.split(',').last), fit: BoxFit.contain, height: 400, width: double.infinity),
+          ]),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(res['message']?.toString() ?? 'فشل', style: const TextStyle(fontFamily: 'Cairo')),
+          backgroundColor: AppTheme.error,
+        ));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Cairo')),
+        backgroundColor: AppTheme.error,
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,6 +200,16 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> with SingleTi
               Expanded(child: OutlinedButton(onPressed: () => _reject(p['id'] as String), style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.error), minimumSize: const Size(0, 40)), child: const Text('رفض', style: TextStyle(color: AppTheme.error, fontFamily: 'Cairo')))),
             ]),
           ],
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => _viewProof(p['id'] as String),
+            icon: const Icon(Icons.receipt_long, size: 16, color: AppTheme.textSecondary),
+            label: const Text('عرض إثبات الدفع', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppTheme.textSecondary)),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(36),
+              side: const BorderSide(color: AppTheme.border),
+            ),
+          ),
         ]),
       ),
     );

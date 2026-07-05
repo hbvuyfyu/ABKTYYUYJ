@@ -3,6 +3,7 @@ import axios from 'axios';
 import prisma from '../utils/prisma';
 import { detectGameByPackage, AfGame, SingularGame, AdjGame } from '../data/games_data';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { getAxiosAgentForUser, verifyProxyWorking } from './proxy.controller';
 
 // ── Daily limit helper ────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ export async function detectGame(req: Request, res: Response): Promise<void> {
 
 export async function sendAF(
   pkg: string, devKey: string, gaid: string, afUid: string,
-  eventName: string, revenue?: number
+  eventName: string, revenue?: number, agent?: any
 ): Promise<{ status: number; body: string }> {
   const url = `https://api2.appsflyer.com/inappevent/${pkg}`;
   const now = Date.now();
@@ -160,14 +161,17 @@ export async function sendAF(
   if (revenue) { payload.eventRevenue = String(revenue); payload.eventCurrency = 'USD'; }
 
   try {
-    const r = await axios.post(url, payload, {
+    const config: any = {
       headers: {
         Authentication: devKey,
         'User-Agent': 'AppsFlyer-Android-SDK/6.15.0 (Linux; Android 14; SM-S911B)',
         'Content-Type': 'application/json',
       },
       timeout: 30000,
-    });
+      proxy: false,
+    };
+    if (agent) config.httpsAgent = agent;
+    const r = await axios.post(url, payload, config);
     return { status: r.status, body: typeof r.data === 'string' ? r.data : JSON.stringify(r.data) };
   } catch (err: any) {
     return { status: err?.response?.status ?? 500, body: JSON.stringify(err?.response?.data ?? err.message) };
@@ -175,13 +179,16 @@ export async function sendAF(
 }
 
 export async function sendADJ(
-  appToken: string, eventToken: string, gpsAdid: string
+  appToken: string, eventToken: string, gpsAdid: string, agent?: any
 ): Promise<{ status: number; body: string }> {
   try {
-    const r = await axios.get('https://s2s.adjust.com/event', {
+    const config: any = {
       params: { app_token: appToken, event_token: eventToken, gps_adid: gpsAdid, s2s: '1', created_at: String(Math.floor(Date.now() / 1000)) },
       timeout: 30000,
-    });
+      proxy: false,
+    };
+    if (agent) config.httpsAgent = agent;
+    const r = await axios.get('https://s2s.adjust.com/event', config);
     return { status: r.status, body: typeof r.data === 'string' ? r.data : JSON.stringify(r.data) };
   } catch (err: any) {
     return { status: err?.response?.status ?? 500, body: JSON.stringify(err?.response?.data ?? err.message) };
@@ -190,7 +197,7 @@ export async function sendADJ(
 
 export async function sendSingular(
   eventName: string, aifa: string, uid: string,
-  pkg: string, appKey: string, level?: number
+  pkg: string, appKey: string, level?: number, agent?: any
 ): Promise<{ status: number; body: string }> {
   const payload: Record<string, any> = {
     a: appKey, p: pkg, i: aifa, e: eventName, t: Date.now(),
@@ -199,10 +206,13 @@ export async function sendSingular(
   if (level) payload.lvl = level;
 
   try {
-    const r = await axios.post('https://s2s.singular.net/api/v1/evt', payload, {
+    const config: any = {
       headers: { 'Content-Type': 'application/json' },
       timeout: 30000,
-    });
+      proxy: false,
+    };
+    if (agent) config.httpsAgent = agent;
+    const r = await axios.post('https://s2s.singular.net/api/v1/evt', payload, config);
     return { status: r.status, body: typeof r.data === 'string' ? r.data : JSON.stringify(r.data) };
   } catch (err: any) {
     return { status: err?.response?.status ?? 500, body: JSON.stringify(err?.response?.data ?? err.message) };
@@ -248,6 +258,21 @@ export async function sendEvent(req: AuthRequest, res: Response): Promise<void> 
   }
 
   try {
+    // Check if user has a selected proxy and verify it works
+    const agent = await getAxiosAgentForUser(userId);
+    if (agent) {
+      const proxyCheck = await verifyProxyWorking(userId);
+      if (!proxyCheck.working) {
+        res.status(502).json({
+          success: false,
+          message: 'البروكسي المختار لا يعمل. يرجى اختيار بروكسي آخر أو إلغاء التحديد.',
+          code: 'PROXY_NOT_WORKING',
+          proxyError: proxyCheck.error,
+        });
+        return;
+      }
+    }
+
     let result: { status: number; body: string };
 
     if (platform === 'af') {
@@ -255,19 +280,19 @@ export async function sendEvent(req: AuthRequest, res: Response): Promise<void> 
         res.status(400).json({ success: false, message: 'AF requires: package, devKey, gaid, afUid, eventName' });
         return;
       }
-      result = await sendAF(pkg, devKey, gaid, afUid, eventName, revenue);
+      result = await sendAF(pkg, devKey, gaid, afUid, eventName, revenue, agent ?? undefined);
     } else if (platform === 'adj') {
       if (!appToken || !eventToken || !gaid) {
         res.status(400).json({ success: false, message: 'ADJ requires: appToken, eventToken, gaid' });
         return;
       }
-      result = await sendADJ(appToken, eventToken, gaid);
+      result = await sendADJ(appToken, eventToken, gaid, agent ?? undefined);
     } else if (platform === 'singular') {
       if (!pkg || !appKey || !gaid || !eventName) {
         res.status(400).json({ success: false, message: 'Singular requires: package, appKey, gaid, eventName' });
         return;
       }
-      result = await sendSingular(eventName, gaid, afUid || '', pkg, appKey, level);
+      result = await sendSingular(eventName, gaid, afUid || '', pkg, appKey, level, agent ?? undefined);
     } else {
       res.status(400).json({ success: false, message: 'Unknown platform. Use: af, adj, singular' });
       return;

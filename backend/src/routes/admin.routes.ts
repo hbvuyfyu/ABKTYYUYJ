@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   getDashboard, getUsers, getPendingPayments, getAllPayments,
   approvePayment, rejectPayment, activateSubscription, toggleUser,
-  getAdminLogs, getAllSubscriptions,
+  getAdminLogs, getAllSubscriptions, getPaymentProof,
 } from '../controllers/admin.controller';
 import { getAllPlans, createPlan, updatePlan, deletePlan } from '../controllers/plan.controller';
 import {
@@ -19,6 +19,7 @@ router.get('/users', getUsers);
 router.patch('/users/:userId/toggle', toggleUser);
 router.get('/payments/pending', getPendingPayments);
 router.get('/payments', getAllPayments);
+router.get('/payments/:paymentId/proof', getPaymentProof);
 router.post('/payments/:paymentId/approve', approvePayment);
 router.post('/payments/:paymentId/reject', rejectPayment);
 router.get('/subscriptions', getAllSubscriptions);

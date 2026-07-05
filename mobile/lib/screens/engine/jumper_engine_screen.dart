@@ -292,6 +292,14 @@ class _JumperEngineScreenState extends State<JumperEngineScreen> with SingleTick
         return;
       }
 
+      if (code == 'PROXY_NOT_WORKING' || sc == 502) {
+        final msg = res['message']?.toString() ?? 'البروكسي المختار لا يعمل';
+        _log$(msg);
+        setState(() { _phase = _Phase.pickEvent; });
+        _showSnack(msg);
+        return;
+      }
+
       final ok = res['success'] == true;
       final httpCode = res['statusCode'] as int? ?? sc;
       _log$(ok ? 'نجح الإرسال - HTTP $httpCode' : 'فشل: ${res['message'] ?? 'خطأ'}');
