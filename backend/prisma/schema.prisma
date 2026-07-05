@@ -45,6 +45,7 @@ model User {
   dailyUsages   DailyUsage[]
   adminLogs     AdminLog[]     @relation("AdminLogs")
   targetLogs    AdminLog[]     @relation("TargetLogs")
+  schedGroups   SchedGroup[]
 
   @@map("users")
 }
@@ -192,4 +193,30 @@ model GameEvent {
   game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@map("game_events")
+}
+
+// ── Scheduling groups (جدولة العمليات) ──────────────────────────────────────
+
+model SchedGroup {
+  id              String   @id @default(uuid())
+  userId          String
+  platform        String   // 'af' | 'singular' | 'adj'
+  gameId          String?
+  gameName        String
+  gamePkg         String?
+  gameKey         String?  // devKey (af) | appKey (singular) | appToken (adj)
+  eventsOrder     String   // JSON: list of {level, interval} or {token, interval} or [[id, name], ...]
+  intervalMinutes Int      // -1 = custom per-level, 0 = immediate, >0 = unified interval
+  gaid            String
+  afUid           String?
+  status          String   @default("active") // 'active' | 'stopped' | 'completed'
+  createdAt       DateTime @default(now())
+  nextRun         DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("sched_groups")
 }

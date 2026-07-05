@@ -13,7 +13,9 @@ import subscriptionRoutes from './routes/subscription.routes';
 import adminRoutes from './routes/admin.routes';
 import settingsRoutes from './routes/settings.routes';
 import gamesRoutes from './routes/games.routes';
+import scheduleRoutes from './routes/schedule.routes';
 import prisma from './utils/prisma';
+import { resumeActiveGroups } from './utils/scheduler';
 
 dotenv.config();
 
@@ -57,6 +59,7 @@ app.use('/api/subscriptions', apiLimiter, subscriptionRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/games', apiLimiter, gamesRoutes);
+app.use('/api/schedule', apiLimiter, scheduleRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', async (_req, res) => {
@@ -113,6 +116,7 @@ async function bootstrap(): Promise<void> {
 
   app.listen(PORT, () => {
     console.log(`🚀 VIP Backend running on port ${PORT}`);
+    resumeActiveGroups();
   });
 }
 

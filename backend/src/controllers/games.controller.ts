@@ -119,9 +119,9 @@ export async function detectGame(req: Request, res: Response): Promise<void> {
   res.json({ success: true, found: false, message: 'Game not in supported list' });
 }
 
-// ── HTTP send helpers ────────────────────────────────────────────────────────
+// ── HTTP send helpers (exported for scheduler) ───────────────────────────────
 
-async function sendAF(
+export async function sendAF(
   pkg: string, devKey: string, gaid: string, afUid: string,
   eventName: string, revenue?: number
 ): Promise<{ status: number; body: string }> {
@@ -174,7 +174,7 @@ async function sendAF(
   }
 }
 
-async function sendADJ(
+export async function sendADJ(
   appToken: string, eventToken: string, gpsAdid: string
 ): Promise<{ status: number; body: string }> {
   try {
@@ -188,7 +188,7 @@ async function sendADJ(
   }
 }
 
-async function sendSingular(
+export async function sendSingular(
   eventName: string, aifa: string, uid: string,
   pkg: string, appKey: string, level?: number
 ): Promise<{ status: number; body: string }> {
