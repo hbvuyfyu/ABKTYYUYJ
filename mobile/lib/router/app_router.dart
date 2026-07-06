@@ -9,7 +9,8 @@ import '../screens/home/home_screen.dart';
 import '../screens/subscription/plans_screen.dart';
 import '../screens/payment/payment_screen.dart';
 import '../screens/payment/payment_proof_screen.dart';
-import '../screens/payment/usdt_payment_screen.dart';
+import '../screens/payment/oxapay_payment_screen.dart';
+import '../screens/payment/shamcash_payment_screen.dart';
 import '../screens/engine/engine_guard_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
@@ -51,7 +52,15 @@ class AppRouter {
             ),
             GoRoute(
               path: '/payment/:paymentId/usdt',
-              builder: (_, state) => UsdtPaymentScreen(paymentId: state.pathParameters['paymentId']!),
+              builder: (_, state) => OxapayPaymentScreen(paymentId: state.pathParameters['paymentId']!),
+            ),
+            GoRoute(
+              path: '/payment/:paymentId/oxapay',
+              builder: (_, state) => OxapayPaymentScreen(paymentId: state.pathParameters['paymentId']!),
+            ),
+            GoRoute(
+              path: '/payment/:paymentId/shamcash',
+              builder: (_, state) => ShamCashPaymentScreen(paymentId: state.pathParameters['paymentId']!),
             ),
             GoRoute(path: '/engine',  builder: (_, __) => const EngineGuardScreen()),
             GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),

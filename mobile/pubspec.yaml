@@ -38,6 +38,9 @@ dependencies:
   intl: ^0.20.2
   url_launcher: ^6.2.2
 
+  # WebView for payment
+  webview_flutter: ^4.4.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

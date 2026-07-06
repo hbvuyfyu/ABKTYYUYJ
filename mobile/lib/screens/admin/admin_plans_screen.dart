@@ -41,7 +41,7 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
     final opsCtrl = TextEditingController(text: plan != null ? '${plan['dailyOperations']}' : '');
     bool isActive = plan?['isActive'] != false;
 
-    showDialog(context: context, builder: (_) => AlertDialog(
+    showDialog(context: context, builder: (dialogCtx) => AlertDialog(
       backgroundColor: AppTheme.cardBg,
       title: Text(isEdit ? 'تعديل: ${plan!['name']}' : 'إضافة باقة جديدة', style: const TextStyle(fontFamily: 'Cairo', color: AppTheme.textPrimary)),
       content: StatefulBuilder(builder: (ctx, setS) => SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -65,10 +65,16 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
         ),
       ]))),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppTheme.textSecondary))),
+        TextButton(
+          onPressed: () {
+            Navigator.of(dialogCtx).pop();
+          },
+          child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppTheme.textSecondary)),
+        ),
         ElevatedButton(
           onPressed: () async {
-            Navigator.pop(context);
+            Navigator.of(dialogCtx).pop();
+
             final body = {
               'name': nameCtrl.text,
               'nameAr': nameArCtrl.text,
@@ -83,15 +89,31 @@ class _AdminPlansScreenState extends State<AdminPlansScreen> {
                   : await ApiService.post('/admin/plans', body);
               if (!mounted) return;
               if (res['success'] == true) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'تم تحديث الباقة' : 'تم إضافة الباقة', style: const TextStyle(fontFamily: 'Cairo')), backgroundColor: AppTheme.success));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(isEdit ? 'تم تحديث الباقة' : 'تم إضافة الباقة', style: const TextStyle(fontFamily: 'Cairo')),
+                  backgroundColor: AppTheme.success,
+                ));
                 _loadPlans();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message']?.toString() ?? 'فشل', style: const TextStyle(fontFamily: 'Cairo')), backgroundColor: AppTheme.error));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(res['message']?.toString() ?? 'فشل', style: const TextStyle(fontFamily: 'Cairo')),
+                  backgroundColor: AppTheme.error,
+                ));
               }
-            } catch (_) {}
+            } catch (e) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('خطأ: $e', style: const TextStyle(fontFamily: 'Cairo')),
+                backgroundColor: AppTheme.error,
+              ));
+            }
           },
-          style: ElevatedButton.styleFrom(minimumSize: const Size(0, 40)),
-          child: Text(isEdit ? 'حفظ' : 'إضافة', style: const TextStyle(fontFamily: 'Cairo')),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.black,
+            minimumSize: const Size(80, 44),
+          ),
+          child: Text(isEdit ? 'حفظ' : 'إضافة', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
         ),
       ],
     ));
