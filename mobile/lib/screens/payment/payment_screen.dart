@@ -58,8 +58,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final paymentId = (res['data'] as Map<String, dynamic>)['id'] as String;
 
         if (_selectedMethod == 'USDT_BEP20') {
-          // USDT via OxaPay - new integrated screen
-          context.push('/payment/$paymentId/oxapay');
+          // USDT direct payment - manual TXID verification
+          context.push('/payment/$paymentId/usdt');
         } else if (_selectedMethod == 'SHAM_CASH' || _selectedMethod == 'SYRIATEL_CASH') {
           // ShamCash or Syriatel Cash - new auto-verification screen
           context.push('/payment/$paymentId/shamcash');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
@@ -33,21 +34,39 @@ class _ShamCashPaymentScreenState extends State<ShamCashPaymentScreen> {
 
   Future<void> _loadData() async {
     try {
+      // Load payment directly by fetching from payment-history and finding the correct one
       final results = await Future.wait([
         ApiService.get('/users/payment-history'),
         ApiService.get('/settings/payment', auth: false),
       ]);
+
       if (results[0]['success'] == true) {
         final payments = (results[0]['data'] as List?) ?? [];
-        _payment = payments.firstWhere(
-          (p) => (p as Map)['id'] == widget.paymentId,
-          orElse: () => null,
-        ) as Map<String, dynamic>?;
+        // Find the payment by ID
+        for (final p in payments) {
+          if ((p as Map)['id'] == widget.paymentId) {
+            _payment = p as Map<String, dynamic>;
+            break;
+          }
+        }
+        // If not found in history, create a minimal payment object with the ID
+        _payment ??= {
+          'id': widget.paymentId,
+          'method': 'SHAM_CASH',
+          'amount': 0,
+        };
       }
       if (results[1]['success'] == true) {
         _settings = results[1]['data'] as Map<String, dynamic>?;
       }
-    } catch (_) {}
+    } catch (e) {
+      // Create default payment object on error
+      _payment = {
+        'id': widget.paymentId,
+        'method': 'SHAM_CASH',
+        'amount': 0,
+      };
+    }
     setState(() => _loading = false);
   }
 
@@ -170,9 +189,11 @@ class _ShamCashPaymentScreenState extends State<ShamCashPaymentScreen> {
                                 IconButton(
                                   icon: const Icon(Icons.copy, color: AppTheme.primary, size: 20),
                                   onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: address.toString()));
                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text('تم النسخ', style: TextStyle(fontFamily: 'Cairo')),
-                                      duration: Duration(seconds: 1),
+                                      content: Text('تم نسخ العنوان', style: TextStyle(fontFamily: 'Cairo')),
+                                      backgroundColor: AppTheme.success,
+                                      duration: Duration(seconds: 2),
                                     ));
                                   },
                                 ),
