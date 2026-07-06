@@ -206,122 +206,87 @@ class _EngineGuardScreenState extends State<EngineGuardScreen>
           onPressed: () => context.go('/'),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            // 3D Rotating VIP Logo with glow
-            AnimatedBuilder(
-              animation: _glow,
-              builder: (_, __) => Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.white.withOpacity(_glow.value * 0.2), blurRadius: 40, spreadRadius: 8)],
-                ),
-                child: _build3DLogo(120),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text('VIP Engine', style: TextStyle(
-              fontSize: 32, fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary, fontFamily: 'Cairo', letterSpacing: 2,
-            )),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.success.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.success.withOpacity(0.3)),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppTheme.success, shape: BoxShape.circle)),
-                const SizedBox(width: 8),
-                const Text('Root Access Granted', style: TextStyle(color: AppTheme.success, fontFamily: 'Cairo', fontSize: 12)),
-              ]),
-            ),
-
-            const SizedBox(height: 48),
-
-            // JuMper Engine Button - BLACK text on WHITE background
-            AnimatedBuilder(
-              animation: _glow,
-              builder: (_, __) => Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.white.withOpacity(_glow.value * 0.15), blurRadius: 30, spreadRadius: 4)],
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const JumperEngineScreen())),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 22),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 0,
-                    ),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                      Text('⚡', style: TextStyle(fontSize: 28, color: Colors.black)),
-                      SizedBox(width: 14),
-                      Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('محرك الأحداث', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: Colors.black)),
-                        Text('VIP Jumper Engine', style: TextStyle(fontSize: 11, fontFamily: 'Courier', color: Colors.black54, letterSpacing: 1.5)),
-                      ]),
-                    ]),
+            // 3D Rotating VIP Logo with glow
+            Center(
+              child: AnimatedBuilder(
+                animation: _glow,
+                builder: (_, __) => Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.white.withOpacity(_glow.value * 0.2), blurRadius: 40, spreadRadius: 8)],
                   ),
+                  child: _build3DLogo(110),
                 ),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // جدولة العمليات Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleEngineScreen())),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: AppTheme.surface,
-                  foregroundColor: AppTheme.textPrimary,
-                  side: BorderSide(color: AppTheme.primary.withOpacity(0.35), width: 1),
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            const SizedBox(height: 20),
+            const Center(child: Text('VIP Engine', style: TextStyle(
+              fontSize: 28, fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary, fontFamily: 'Cairo', letterSpacing: 2,
+            ))),
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.success.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.success.withOpacity(0.3)),
                 ),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                  Text('⏰', style: TextStyle(fontSize: 26, color: AppTheme.textPrimary)),
-                  SizedBox(width: 14),
-                  Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('جدولة العمليات', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppTheme.textPrimary)),
-                    Text('Schedule Operations', style: TextStyle(fontSize: 11, fontFamily: 'Courier', color: AppTheme.textSecondary, letterSpacing: 1.5)),
-                  ]),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppTheme.success, shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  const Text('Root Access Granted', style: TextStyle(color: AppTheme.success, fontFamily: 'Cairo', fontSize: 11)),
                 ]),
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
 
-            // بروكسي Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProxyManagerScreen())),
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: AppTheme.surface,
-                  foregroundColor: AppTheme.textPrimary,
-                  side: BorderSide(color: AppTheme.primary.withOpacity(0.35), width: 1),
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                  Text('🌐', style: TextStyle(fontSize: 26, color: AppTheme.textPrimary)),
-                  SizedBox(width: 14),
-                  Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('بروكسي', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Cairo', color: AppTheme.textPrimary)),
-                    Text('Proxy Manager', style: TextStyle(fontSize: 11, fontFamily: 'Courier', color: AppTheme.textSecondary, letterSpacing: 1.5)),
-                  ]),
-                ]),
+            // ── Feature cards grid ──
+            _buildFeatureCard(
+              context: context,
+              icon: '⚡',
+              title: 'محرك الأحداث',
+              subtitle: 'VIP Jumper Engine',
+              description: 'تشغيل الأحداث على التطبيقات المفتوحة',
+              isPrimary: true,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const JumperEngineScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildFeatureCard(
+              context: context,
+              icon: '⏰',
+              title: 'جدولة العمليات',
+              subtitle: 'Schedule Operations',
+              description: 'جدولة الأحداث لتعمل تلقائياً بأوقات محددة',
+              isPrimary: false,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ScheduleEngineScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _buildFeatureCard(
+              context: context,
+              icon: '🌐',
+              title: 'بروكسي',
+              subtitle: 'Proxy Manager',
+              description: 'إدارة البروكسيات واستخدامها في الأحداث والجدولة',
+              isPrimary: false,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProxyManagerScreen()),
               ),
             ),
 
@@ -335,7 +300,7 @@ class _EngineGuardScreenState extends State<EngineGuardScreen>
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppTheme.border),
               ),
-              child: Row(children: [
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 18),
                 const SizedBox(width: 10),
                 Expanded(child: Text(
@@ -344,7 +309,138 @@ class _EngineGuardScreenState extends State<EngineGuardScreen>
                 )),
               ]),
             ),
+            const SizedBox(height: 24),
           ]),
+        ),
+      ),
+    );
+  }
+
+  // ── Professional feature card ──────────────────────────────────────────────
+  Widget _buildFeatureCard({
+    required BuildContext context,
+    required String icon,
+    required String title,
+    required String subtitle,
+    required String description,
+    required bool isPrimary,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedBuilder(
+          animation: _glow,
+          builder: (_, __) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            decoration: BoxDecoration(
+              color: isPrimary ? AppTheme.primary : AppTheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isPrimary
+                    ? AppTheme.primary
+                    : AppTheme.glassBorder,
+                width: isPrimary ? 1 : 0.5,
+              ),
+              boxShadow: isPrimary
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(_glow.value * 0.15),
+                        blurRadius: 30,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+            ),
+            child: Row(children: [
+              // Icon container
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: isPrimary
+                      ? Colors.black.withOpacity(0.08)
+                      : AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isPrimary
+                        ? Colors.black.withOpacity(0.1)
+                        : AppTheme.border,
+                    width: 0.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    icon,
+                    style: TextStyle(
+                      fontSize: 26,
+                      color: isPrimary ? Colors.black : AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        color: isPrimary ? Colors.black : AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'Courier',
+                        letterSpacing: 1.2,
+                        color: isPrimary
+                            ? Colors.black54
+                            : AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'Cairo',
+                        height: 1.4,
+                        color: isPrimary
+                            ? Colors.black54
+                            : AppTheme.textSecondary.withOpacity(0.7),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Arrow
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: isPrimary ? Colors.black54 : AppTheme.textSecondary,
+              ),
+            ]),
+          ),
         ),
       ),
     );
