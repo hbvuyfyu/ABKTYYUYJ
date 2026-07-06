@@ -97,6 +97,7 @@ model Payment {
   amount           Float
   proofImageUrl    String?
   proofImageBase64 String?
+  proofSubmittedAt DateTime?
   txid             String?       @unique
   txidVerified     Boolean       @default(false)
   notes            String?

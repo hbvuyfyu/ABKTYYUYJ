@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPayment, uploadProof, verifyTxid, getPaymentSettings } from '../controllers/payment.controller';
+import { createPayment, uploadProof, verifyTxid, getPaymentSettings, submitPaymentProof } from '../controllers/payment.controller';
 import { createOxapayPayment, oxapayCallback, checkOxapayStatus } from '../controllers/oxapay.controller';
 import { verifyShamCashTransaction, getSyriatelHistory, getShamCashLogs } from '../controllers/apisyria.controller';
 import { authenticate } from '../middleware/auth.middleware';
@@ -16,6 +16,7 @@ router.post('/oxapay/callback', oxapayCallback);
 router.use(authenticate);
 router.post('/', createPayment);
 router.post('/:paymentId/proof', uploadProof);
+router.post('/:paymentId/submit-proof', submitPaymentProof);
 router.post('/:paymentId/verify-txid', verifyTxid);
 
 // OxaPay routes (USDT)

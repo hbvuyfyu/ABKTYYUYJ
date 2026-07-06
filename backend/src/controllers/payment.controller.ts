@@ -151,6 +151,118 @@ export const uploadProof = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+// ── Submit proof for manual payment methods (ShamCash, Syriatel Cash)
+// Accepts transaction number OR image proof, marks for admin approval
+export const submitPaymentProof = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { paymentId } = req.params;
+    const { transactionNo, imageBase64 } = req.body;
+
+    // Validate at least one proof method is provided
+    if (!transactionNo && !imageBase64) {
+      res.status(400).json({ success: false, message: 'أدخل رقم العملية أو أرفق صورة الإثبات' });
+      return;
+    }
+
+    // Find the payment
+    const payment = await withDb(() =>
+      prisma.payment.findFirst({
+        where: { id: paymentId, userId: req.user!.id, status: 'PENDING' },
+        include: { plan: true },
+      })
+    );
+
+    if (!payment) {
+      res.status(404).json({ success: false, message: 'الدفع غير موجود أو تمت معالجته' });
+      return;
+    }
+
+    // Only allow for manual payment methods
+    if (payment.method !== 'SHAM_CASH' && payment.method !== 'SYRIATEL_CASH') {
+      res.status(400).json({ success: false, message: 'هذه الطريقة لا تتطلب إثبات يدوي' });
+      return;
+    }
+
+    // Check if transaction number is already used
+    if (transactionNo) {
+      const usedTx = await withDb(() =>
+        prisma.usedTxid.findUnique({ where: { txid: transactionNo } })
+      );
+      if (usedTx) {
+        res.status(409).json({ success: false, message: 'رقم العملية مستخدم مسبقاً' });
+        return;
+      }
+    }
+
+    // Handle image upload if provided
+    let proofImageUrl: string | null = null;
+    let proofImageBase64: string | null = null;
+
+    if (imageBase64) {
+      try {
+        await configureCloudinary();
+        const config = cloudinary.config();
+        if (config.cloud_name && config.api_key && config.api_secret) {
+          const result = await cloudinary.uploader.upload(imageBase64, {
+            folder: 'game-event/payment-proofs',
+            resource_type: 'image',
+          });
+          proofImageUrl = result.secure_url;
+        }
+      } catch (cloudErr) {
+        console.error('[submitPaymentProof] Cloudinary upload failed:', errMsg(cloudErr));
+      }
+
+      if (!proofImageUrl) {
+        proofImageBase64 = imageBase64;
+      }
+    }
+
+    // Update payment with proof
+    const updateData: any = {
+      proofImageUrl,
+      proofImageBase64,
+    };
+
+    if (transactionNo) {
+      updateData.txid = transactionNo;
+      // Mark transaction as used
+      await withDb(() =>
+        prisma.usedTxid.create({
+          data: { txid: transactionNo, userId: req.user!.id },
+        })
+      );
+    }
+
+    await withDb(() =>
+      prisma.payment.update({
+        where: { id: paymentId },
+        data: updateData,
+      })
+    );
+
+    // Log the submission
+    await withDb(() =>
+      prisma.adminLog.create({
+        data: {
+          adminId: req.user!.id,
+          targetId: req.user!.id,
+          action: 'PAYMENT_PROOF_SUBMITTED',
+          details: `Payment ${paymentId} proof submitted. Method: ${payment.method}. TX: ${transactionNo || 'N/A'}. Image: ${proofImageUrl ? 'Yes' : proofImageBase64 ? 'Base64' : 'No'}`,
+        },
+      })
+    );
+
+    res.json({
+      success: true,
+      message: 'تم إرسال الإثبات بنجاح. سيتم تفعيل اشتراكك بعد موافقة الإدارة.',
+    });
+  } catch (err) {
+    console.error('[submitPaymentProof]', errMsg(err));
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
+  }
+};
+
 // ── TXID Verify: validates blockchain tx but DOES NOT auto-activate subscription
 // Subscription is only activated after admin explicitly approves the payment.
 export const verifyTxid = async (req: AuthRequest, res: Response): Promise<void> => {

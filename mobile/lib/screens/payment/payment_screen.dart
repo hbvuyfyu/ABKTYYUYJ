@@ -58,11 +58,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final paymentId = (res['data'] as Map<String, dynamic>)['id'] as String;
 
         if (_selectedMethod == 'USDT_BEP20') {
-          // USDT direct payment - manual TXID verification
-          context.push('/payment/$paymentId/usdt');
+          // USDT via OxaPay - WebView checkout with auto-activation
+          context.push('/payment/$paymentId/oxapay');
         } else if (_selectedMethod == 'SHAM_CASH' || _selectedMethod == 'SYRIATEL_CASH') {
-          // ShamCash or Syriatel Cash - new auto-verification screen
-          context.push('/payment/$paymentId/shamcash');
+          // ShamCash / Syriatel Cash - Manual payment with admin approval
+          context.push('/payment/$paymentId/manual');
         } else {
           // Other methods - show proof upload screen
           context.push('/payment/$paymentId/proof');
@@ -157,21 +157,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'label': 'Sham Cash',
         'icon': Icons.account_balance_wallet_outlined,
         'color': AppTheme.primary,
-        'desc': 'تحويل تلقائي مع تأكيد فوري',
+        'desc': 'تحويل يدوي مع موافقة الإدارة',
       },
       {
         'value': 'SYRIATEL_CASH',
         'label': 'Syriatel Cash',
         'icon': Icons.phone_android_outlined,
         'color': AppTheme.success,
-        'desc': 'تحويل تلقائي مع تأكيد فوري',
+        'desc': 'تحويل يدوي مع موافقة الإدارة',
       },
       {
         'value': 'USDT_BEP20',
-        'label': 'USDT (TRC20)',
+        'label': 'USDT (OxaPay)',
         'icon': Icons.currency_bitcoin,
         'color': AppTheme.accent,
-        'desc': 'دفع آمن عبر OxaPay',
+        'desc': 'دفع تلقائي مع تفعيل فوري',
       },
     ];
 
