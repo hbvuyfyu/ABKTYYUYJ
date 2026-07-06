@@ -9,8 +9,9 @@ import '../screens/home/home_screen.dart';
 import '../screens/subscription/plans_screen.dart';
 import '../screens/payment/payment_screen.dart';
 import '../screens/payment/payment_proof_screen.dart';
-import '../screens/payment/manual_payment_screen.dart';
 import '../screens/payment/oxapay_payment_screen.dart';
+import '../screens/payment/usdt_payment_screen.dart';
+import '../screens/payment/shamcash_payment_screen.dart';
 import '../screens/engine/engine_guard_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
@@ -50,15 +51,17 @@ class AppRouter {
               path: '/payment/:paymentId/proof',
               builder: (_, state) => PaymentProofScreen(paymentId: state.pathParameters['paymentId']!),
             ),
-            // USDT via OxaPay - WebView-based checkout with auto-activation
+            GoRoute(
+              path: '/payment/:paymentId/usdt',
+              builder: (_, state) => UsdtPaymentScreen(paymentId: state.pathParameters['paymentId']!),
+            ),
             GoRoute(
               path: '/payment/:paymentId/oxapay',
               builder: (_, state) => OxapayPaymentScreen(paymentId: state.pathParameters['paymentId']!),
             ),
-            // ShamCash / Syriatel Cash - Manual payment with admin approval
             GoRoute(
-              path: '/payment/:paymentId/manual',
-              builder: (_, state) => ManualPaymentScreen(paymentId: state.pathParameters['paymentId']!),
+              path: '/payment/:paymentId/shamcash',
+              builder: (_, state) => ShamCashPaymentScreen(paymentId: state.pathParameters['paymentId']!),
             ),
             GoRoute(path: '/engine',  builder: (_, __) => const EngineGuardScreen()),
             GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),

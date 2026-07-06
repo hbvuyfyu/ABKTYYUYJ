@@ -54,30 +54,48 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       if (!mounted) return;
 
+      // Debug: print response
+      debugPrint('Payment API Response: $res');
+
       if (res['success'] == true) {
         final paymentId = (res['data'] as Map<String, dynamic>)['id'] as String;
 
         if (_selectedMethod == 'USDT_BEP20') {
-          // USDT via OxaPay - WebView checkout with auto-activation
-          context.push('/payment/$paymentId/oxapay');
+          // USDT direct payment - manual TXID verification
+          context.push('/payment/$paymentId/usdt');
         } else if (_selectedMethod == 'SHAM_CASH' || _selectedMethod == 'SYRIATEL_CASH') {
-          // ShamCash / Syriatel Cash - Manual payment with admin approval
-          context.push('/payment/$paymentId/manual');
+          // ShamCash or Syriatel Cash - new auto-verification screen
+          context.push('/payment/$paymentId/shamcash');
         } else {
           // Other methods - show proof upload screen
           context.push('/payment/$paymentId/proof');
         }
       } else {
+        final statusCode = res['_statusCode'] ?? 0;
+        String errorMsg = res['message']?.toString() ?? 'خطأ في إنشاء طلب الدفع';
+
+        // Add more context based on status code
+        if (statusCode == 401) {
+          errorMsg = 'الجلسة منتهية، سجل دخولك مجدداً';
+        } else if (statusCode == 0) {
+          errorMsg = 'لا يوجد اتصال بالسيرفر';
+        } else if (statusCode >= 500) {
+          errorMsg = 'خطأ في السيرفر ($statusCode)';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(res['message']?.toString() ?? 'خطأ في إنشاء طلب الدفع', style: const TextStyle(fontFamily: 'Cairo')),
+          content: Text(errorMsg, style: const TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppTheme.error,
+          duration: const Duration(seconds: 4),
         ));
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('خطأ في الاتصال بالسيرفر', style: TextStyle(fontFamily: 'Cairo')),
+      debugPrint('Payment API Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('خطأ في الاتصال: $e', style: const TextStyle(fontFamily: 'Cairo')),
         backgroundColor: AppTheme.error,
+        duration: const Duration(seconds: 4),
       ));
     }
 
@@ -157,21 +175,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'label': 'Sham Cash',
         'icon': Icons.account_balance_wallet_outlined,
         'color': AppTheme.primary,
-        'desc': 'تحويل يدوي مع موافقة الإدارة',
+        'desc': 'تحويل تلقائي مع تأكيد فوري',
       },
       {
         'value': 'SYRIATEL_CASH',
         'label': 'Syriatel Cash',
         'icon': Icons.phone_android_outlined,
         'color': AppTheme.success,
-        'desc': 'تحويل يدوي مع موافقة الإدارة',
+        'desc': 'تحويل تلقائي مع تأكيد فوري',
       },
       {
         'value': 'USDT_BEP20',
-        'label': 'USDT (OxaPay)',
+        'label': 'USDT (TRC20)',
         'icon': Icons.currency_bitcoin,
         'color': AppTheme.accent,
-        'desc': 'دفع تلقائي مع تفعيل فوري',
+        'desc': 'دفع آمن عبر OxaPay',
       },
     ];
 
