@@ -35,7 +35,7 @@ android {
 
     defaultConfig {
         applicationId 'com.vip.app'
-        minSdk flutter.minSdkVersion
+        minSdk 21
         targetSdk flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
