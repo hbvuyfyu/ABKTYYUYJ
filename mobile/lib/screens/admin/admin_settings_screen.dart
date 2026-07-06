@@ -76,7 +76,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _saveAll() async {
     setState(() => _saving = true);
     try {
-      final settingsList = _settings.map((s) => {
+      final settingsList = _settings.map((s) {
         final key = s['key'] as String;
         return {
           'key': key,
