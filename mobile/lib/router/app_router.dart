@@ -66,7 +66,7 @@ class AppRouter {
             GoRoute(path: '/admin/users',      builder: (_, __) => const AdminUsersScreen()),
             GoRoute(path: '/admin/payments',   builder: (_, __) => const AdminPaymentsScreen()),
             GoRoute(path: '/admin/settings',   builder: (_, __) => const AdminSettingsScreen()),
-            GoRoute(path: '/admin/plans',      builder: (_, __) => const AdminPlanesScreen()),
+            GoRoute(path: '/admin/plans',      builder: (_, __) => const AdminPlansScreen()),
             GoRoute(path: '/admin/games',      builder: (_, __) => const AdminGamesScreen()),
           ],
         ),
