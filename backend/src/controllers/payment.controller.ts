@@ -56,10 +56,15 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Check for already-pending payment for same plan
+    // Check for already-pending payment for same plan (only if user already confirmed)
     const existingPending = await withDb(() =>
       prisma.payment.findFirst({
-        where: { userId: req.user!.id, planId, status: 'PENDING' },
+        where: {
+          userId: req.user!.id,
+          planId,
+          status: 'PENDING',
+          userConfirmedAt: { not: null }, // Only block if user already confirmed
+        },
       })
     );
     if (existingPending) {
@@ -71,9 +76,17 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    // Create payment - NOT sent to admin yet (userConfirmedAt is null)
     const payment = await withDb(() =>
       prisma.payment.create({
-        data: { userId: req.user!.id, planId, method, amount: plan.price, status: 'PENDING' },
+        data: {
+          userId: req.user!.id,
+          planId,
+          method,
+          amount: plan.price,
+          status: 'PENDING',
+          // userConfirmedAt remains null until user confirms
+        },
         include: { plan: true },
       })
     );
@@ -153,6 +166,7 @@ export const uploadProof = async (req: AuthRequest, res: Response): Promise<void
 
 // ── Submit proof for manual payment methods (ShamCash, Syriatel Cash)
 // Accepts transaction number OR image proof, marks for admin approval
+// User confirms first, THEN admin reviews
 export const submitPaymentProof = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { paymentId } = req.params;
@@ -218,10 +232,11 @@ export const submitPaymentProof = async (req: AuthRequest, res: Response): Promi
       }
     }
 
-    // Update payment with proof
+    // Update payment with proof and mark as user confirmed
     const updateData: any = {
       proofImageUrl,
       proofImageBase64,
+      userConfirmedAt: new Date(), // Mark as user confirmed - now admin can see it
     };
 
     if (transactionNo) {
@@ -263,8 +278,8 @@ export const submitPaymentProof = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-// ── TXID Verify: validates blockchain tx but DOES NOT auto-activate subscription
-// Subscription is only activated after admin explicitly approves the payment.
+// ── TXID Verify: validates blockchain tx and marks payment for admin review
+// User confirms payment first, THEN admin reviews it
 export const verifyTxid = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { paymentId } = req.params;
@@ -323,13 +338,16 @@ export const verifyTxid = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Mark TXID as used and update payment (still PENDING — admin must approve)
+    // Mark TXID as used and update payment with user confirmation
     await withDb(() => prisma.usedTxid.create({ data: { txid, userId: req.user!.id } }));
     await withDb(() =>
       prisma.payment.update({
         where: { id: paymentId },
-        data: { txid, txidVerified: true },
-        // status remains PENDING — admin approval required
+        data: {
+          txid,
+          txidVerified: true,
+          userConfirmedAt: new Date(), // Mark as user confirmed - now admin can see it
+        },
       })
     );
 

@@ -106,6 +106,7 @@ export const createOxapayPayment = async (req: AuthRequest, res: Response): Prom
 };
 
 // Handle OxaPay callback (server-side verification)
+// Auto-approves and activates subscription when OxaPay confirms payment
 export const oxapayCallback = async (req: any, res: Response): Promise<void> => {
   try {
     const data = req.body;
@@ -171,7 +172,7 @@ export const oxapayCallback = async (req: any, res: Response): Promise<void> => 
       })
     );
 
-    // Create subscription
+    // Create subscription - AUTO-APPROVED for OxaPay
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + (payment.plan?.durationDays || 30));
@@ -188,7 +189,7 @@ export const oxapayCallback = async (req: any, res: Response): Promise<void> => 
       })
     );
 
-    // Update payment status
+    // Update payment status - AUTO-APPROVED
     await withDb(() =>
       prisma.payment.update({
         where: { id: payment.id },
@@ -197,8 +198,9 @@ export const oxapayCallback = async (req: any, res: Response): Promise<void> => 
           subscriptionId: subscription.id,
           oxapayTxId: data.tx_id || data.txId || data.hash,
           txidVerified: true,
+          userConfirmedAt: new Date(), // Mark as confirmed since OxaPay verified
           reviewedAt: new Date(),
-          adminNotes: 'Auto-approved via OxaPay callback',
+          adminNotes: 'Auto-approved via OxaPay callback - payment confirmed by OxaPay',
         },
       })
     );
@@ -223,6 +225,7 @@ export const oxapayCallback = async (req: any, res: Response): Promise<void> => 
 };
 
 // Check OxaPay payment status (for polling)
+// Auto-approves when OxaPay confirms payment
 export const checkOxapayStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { paymentId } = req.params;
@@ -267,7 +270,7 @@ export const checkOxapayStatus = async (req: AuthRequest, res: Response): Promis
       const verifyData = verifyRes.data;
       const isPaid = verifyData.status === 'Paid';
 
-      // If paid, approve the payment
+      // If paid, approve the payment automatically
       if (isPaid && payment.status === 'PENDING') {
         // Cancel any existing active subscription
         await withDb(() =>
@@ -277,7 +280,7 @@ export const checkOxapayStatus = async (req: AuthRequest, res: Response): Promis
           })
         );
 
-        // Create subscription
+        // Create subscription - AUTO-APPROVED
         const startDate = new Date();
         const endDate = new Date();
         const plan = await withDb(() => prisma.plan.findUnique({ where: { id: payment.planId } }));
@@ -295,7 +298,7 @@ export const checkOxapayStatus = async (req: AuthRequest, res: Response): Promis
           })
         );
 
-        // Update payment
+        // Update payment - AUTO-APPROVED
         await withDb(() =>
           prisma.payment.update({
             where: { id: paymentId },
@@ -303,8 +306,9 @@ export const checkOxapayStatus = async (req: AuthRequest, res: Response): Promis
               status: 'APPROVED',
               subscriptionId: subscription.id,
               txidVerified: true,
+              userConfirmedAt: new Date(), // Mark as confirmed since OxaPay verified
               reviewedAt: new Date(),
-              adminNotes: 'Auto-approved via OxaPay check',
+              adminNotes: 'Auto-approved via OxaPay status check',
             },
           })
         );

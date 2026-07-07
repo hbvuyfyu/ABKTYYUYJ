@@ -90,7 +90,7 @@ class _ShamCashPaymentScreenState extends State<ShamCashPaymentScreen> {
 
       if (res['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('تم تأكيد الدفع وتفعيل الاشتراك!', style: TextStyle(fontFamily: 'Cairo')),
+          content: Text('تم تأكيد الدفع. سيتم تفعيل اشتراكك بعد موافقة الإدارة.', style: TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppTheme.success,
           duration: Duration(seconds: 3),
         ));
@@ -249,7 +249,8 @@ class _ShamCashPaymentScreenState extends State<ShamCashPaymentScreen> {
                           '1. افتح تطبيق ${isShamCash ? "ShamCash" : "Syriatel Cash"}\n'
                           '2. قم بتحويل المبلغ المطلوب للعنوان أعلاه\n'
                           '3. بعد التحويل، انسخ رقم العملية من التطبيق\n'
-                          '4. أدخل رقم العملية أدناه واضغط "تأكيد"',
+                          '4. أدخل رقم العملية أدناه واضغط "تأكيد"\n'
+                          '5. سيتم تفعيل اشتراكك بعد موافقة الإدارة',
                           style: const TextStyle(color: AppTheme.textSecondary, fontFamily: 'Cairo', fontSize: 13, height: 1.8),
                         ),
                       ],

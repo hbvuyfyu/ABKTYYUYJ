@@ -3,6 +3,12 @@
 -- Run this after the main database_schema.sql
 -- ============================================================
 
+-- Add userConfirmedAt column to track when user confirmed their payment
+ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "userConfirmedAt" TIMESTAMP(3);
+
+-- Create index for admin queries (only show confirmed payments)
+CREATE INDEX IF NOT EXISTS "payments_status_userConfirmedAt_idx" ON "payments"("status", "userConfirmedAt");
+
 -- Add OxaPay fields to payments table
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "oxapayTrackId" TEXT;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "oxapayPaymentUrl" TEXT;
@@ -52,7 +58,7 @@ UPDATE "settings" SET "group" = 'payment' WHERE "key" IN (
 );
 
 -- Add admin log action types comment
-COMMENT ON TABLE "admin_logs" IS 'Admin action logs. action can be: USER_TOGGLED, PAYMENT_APPROVED, PAYMENT_REJECTED, PAYMENT_AUTO_APPROVED_OXAPAY, PAYMENT_AUTO_APPROVED_APISYRIA, SUBSCRIPTION_ACTIVATED, etc.';
+COMMENT ON TABLE "admin_logs" IS 'Admin action logs. action can be: USER_TOGGLED, PAYMENT_APPROVED, PAYMENT_REJECTED, PAYMENT_AUTO_APPROVED_OXAPAY, PAYMENT_USER_CONFIRMED, SUBSCRIPTION_ACTIVATED, etc.';
 
 -- ============================================================
 -- Done! Payment gateway integration tables updated.

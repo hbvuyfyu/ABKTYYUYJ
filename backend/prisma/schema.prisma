@@ -104,6 +104,7 @@ model Payment {
   adminNotes       String?
   reviewedBy       String?
   reviewedAt       DateTime?
+  userConfirmedAt  DateTime?     // When user confirmed the payment (entered TXID/transaction number)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -116,6 +117,7 @@ model Payment {
   plan         Plan          @relation(fields: [planId], references: [id])
   subscription Subscription? @relation(fields: [subscriptionId], references: [id])
 
+  @@index([status, userConfirmedAt])
   @@map("payments")
 }
 

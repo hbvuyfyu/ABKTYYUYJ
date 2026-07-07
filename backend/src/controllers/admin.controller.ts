@@ -80,11 +80,16 @@ export const getAllSubscriptions = async (_req: AuthRequest, res: Response): Pro
 
 export const getPendingPayments = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
+    // Only show payments where user has confirmed (userConfirmedAt is not null)
+    // This ensures admin only sees payments that are ready for review
     const payments = await withDb(() =>
       prisma.payment.findMany({
-        where: { status: 'PENDING' },
+        where: {
+          status: 'PENDING',
+          userConfirmedAt: { not: null }, // Only show confirmed payments
+        },
         include: { user: { select: { id: true, email: true, name: true } }, plan: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { userConfirmedAt: 'desc' },
       })
     );
     // Strip heavy base64 field from list responses

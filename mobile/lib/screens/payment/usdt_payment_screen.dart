@@ -255,7 +255,8 @@ class _UsdtPaymentScreenState extends State<UsdtPaymentScreen> {
                           '2. افتح محفظتك (Trust Wallet, MetaMask, etc.)\n'
                           '3. أرسل المبلغ المطلوب إلى العنوان\n'
                           '4. بعد التحويل، انسخ TXID من المعاملة\n'
-                          '5. أدخل TXID أدناه واضغط "تأكيد"',
+                          '5. أدخل TXID أدناه واضغط "تأكيد"\n'
+                          '6. سيتم تفعيل اشتراكك بعد موافقة الإدارة',
                           style: TextStyle(color: AppTheme.textSecondary, fontFamily: 'Cairo', fontSize: 13, height: 1.8),
                         ),
                       ],

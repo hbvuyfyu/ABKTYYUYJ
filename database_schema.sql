@@ -83,14 +83,20 @@ CREATE TABLE "payments" (
     "amount" DOUBLE PRECISION NOT NULL,
     "proofImageUrl" TEXT,
     "proofImageBase64" TEXT,
+    "proofSubmittedAt" TIMESTAMP(3),
     "txid" TEXT,
     "txidVerified" BOOLEAN NOT NULL DEFAULT false,
     "notes" TEXT,
     "adminNotes" TEXT,
     "reviewedBy" TEXT,
     "reviewedAt" TIMESTAMP(3),
+    "userConfirmedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- OxaPay fields
+    "oxapayTrackId" TEXT,
+    "oxapayPaymentUrl" TEXT,
+    "oxapayTxId" TEXT,
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
 );
 
@@ -217,6 +223,7 @@ CREATE TABLE "user_proxy_selections" (
 -- Create indexes
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "payments_txid_key" ON "payments"("txid");
+CREATE INDEX "payments_status_userConfirmedAt_idx" ON "payments"("status", "userConfirmedAt");
 CREATE UNIQUE INDEX "daily_usages_userId_subscriptionId_date_key" ON "daily_usages"("userId", "subscriptionId", "date");
 CREATE UNIQUE INDEX "settings_key_key" ON "settings"("key");
 CREATE UNIQUE INDEX "used_txids_txid_key" ON "used_txids"("txid");
